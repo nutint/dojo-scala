@@ -72,15 +72,23 @@ object ArgsEngine {
   case class ArgsEngineShortScheme(schemes: List[ArgsScheme]) extends ArgsEngine {
     def accept(c: Char): ArgsEngine = c match {
       case '-' => ArgsEngineLongScheme(schemes, "")
-      case _ => {
+      case a if schemes.exists(as => isShortAndNonValuedScheme(a, as)) =>
         ArgsEngineIdle(
           schemes.map {
             case n@NonValuedScheme(nc, _, _) if c == nc => n.markFound
-            case v@ValuedScheme(vc, _, _) if c == vc => v.append("abc")
+            case v@ValuedScheme(vc, _, _) if c == vc => v
             case x => x
           }
         )
-      }
+      case a if schemes.exists(as => as.isShortSchemeMatched(a) && as.isInstanceOf[ValuedScheme]) =>
+        ArgsEngineParseValue(
+          schemes,
+          schemes.find(as => as.isShortSchemeMatched(a) && as.isInstanceOf[ValuedScheme]).get.asInstanceOf[ValuedScheme],
+          WaitingForInput)
+    }
+
+    private def isShortAndNonValuedScheme(shortScheme: Char, argsScheme: ArgsScheme) = {
+      argsScheme.isShortSchemeMatched(shortScheme) && argsScheme.isInstanceOf[NonValuedScheme]
     }
   }
   case class ArgsEngineLongScheme(schemes: List[ArgsScheme], parsedScheme: String) extends ArgsEngine {
@@ -119,8 +127,10 @@ object ArgsEngine {
   case class ArgsEngineTerminated(reason: String) extends ArgsEngine
 
   sealed trait ArgsScheme {
+    def shortScheme: Char
     def longScheme: String
-    def isLongSchemeMatched(inputLongScheme: String) = inputLongScheme == longScheme
+    def isLongSchemeMatched(inputLongScheme: String): Boolean = inputLongScheme == longScheme
+    def isShortSchemeMatched(c: Char): Boolean = shortScheme == c
   }
   case class NonValuedScheme(shortScheme: Char, longScheme: String, found: Boolean) extends ArgsScheme {
     def markFound: ArgsScheme = copy(found = true)

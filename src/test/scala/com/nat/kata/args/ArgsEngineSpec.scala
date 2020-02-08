@@ -120,6 +120,8 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
 
     "ArgsEngineShortScheme" - {
 
+      import StringEngine._
+
       "should become ArgsEngineLongScheme when accepts another -" in {
         val schemes = List[ArgsScheme]()
         ArgsEngineShortScheme(schemes).accept('-') shouldBe ArgsEngineLongScheme(schemes, "")
@@ -136,11 +138,9 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
 
       "should detect value scheme when input scheme is matched with one of valued scheme" in {
         val valuedScheme = ValuedScheme('a', "aa", Nil)
-        val foundValuedScheme = valuedScheme.append("abc")
         val schemes = List[ArgsScheme](valuedScheme)
-        val modifiedScheme = List[ArgsScheme](foundValuedScheme)
 
-        ArgsEngineShortScheme(schemes).accept('a') shouldBe ArgsEngineIdle(modifiedScheme)
+        ArgsEngineShortScheme(schemes).accept('a') shouldBe ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput)
       }
     }
 
@@ -167,7 +167,7 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
       }
     }
 
-    "ArgsEngineLongScheme" - {
+    "ArgsEngineParseValue" - {
 
       import StringEngine._
 
@@ -201,6 +201,14 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
       "should return false when long scheme not matched" in {
         NonValuedScheme('a', "aab", false).isLongSchemeMatched("aa") shouldBe false
       }
+
+      "should return true when short scheme matched" in {
+        NonValuedScheme('a', "aab", false).isShortSchemeMatched('a') shouldBe true
+      }
+
+      "should return false when short scheme not matched" in {
+        NonValuedScheme('a', "aab", false).isShortSchemeMatched('b') shouldBe false
+      }
     }
 
     "ValuedScheme" - {
@@ -214,6 +222,14 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
 
       "should return false when long scheme not matched" in {
         ValuedScheme('a', "aab", Nil).isLongSchemeMatched("aa") shouldBe false
+      }
+
+      "should return true when short scheme matched" in {
+        ValuedScheme('a', "aab", Nil).isShortSchemeMatched('a') shouldBe true
+      }
+
+      "should return false when short scheme not matched" in {
+        ValuedScheme('a', "aab", Nil).isShortSchemeMatched('b') shouldBe false
       }
     }
   }
