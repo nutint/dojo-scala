@@ -102,18 +102,18 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
   "ArgsEngine" - {
 
     "ArgsEngineIdle" - {
+
+      val schemes = List[ArgsScheme]()
+
       "should idle when accept space" in {
-        val schemes = List[ArgsScheme]()
         ArgsEngineIdle(schemes).accept(' ') shouldBe ArgsEngineIdle(schemes)
       }
 
       "should be ArgsEngineShortScheme when accepts -" in {
-        val schemes = List[ArgsScheme]()
         ArgsEngineIdle(schemes).accept('-') shouldBe ArgsEngineShortScheme(schemes)
       }
 
       "should be ArgsEngineTerminated when accepts others" in {
-        val schemes = List[ArgsScheme]()
         ArgsEngineIdle(schemes).accept('a') shouldBe ArgsEngineTerminated(s"Unexpected char: a")
       }
     }
@@ -171,16 +171,15 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
 
       import StringEngine._
 
+      val valuedScheme = ValuedScheme('a', "aa", Nil)
+      val schemes = List(valuedScheme)
+
       "should be the same if accept empty string and the string engine is not finished yet" in {
-        val valuedScheme = ValuedScheme('a', "aa", Nil)
-        val schemes = List(valuedScheme)
         ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput).accept(' ') shouldBe
           ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput)
       }
 
       "should be the same if accept any char and the string engine is not finished yet" in {
-        val valuedScheme = ValuedScheme('a', "aa", Nil)
-        val schemes = List(valuedScheme)
         ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput).accept('a') shouldBe
           ArgsEngineParseValue(schemes, valuedScheme, ConsumeNonEscapedString("a"))
       }
@@ -212,6 +211,7 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
     }
 
     "ValuedScheme" - {
+      
       "should append value when call append" in {
         ValuedScheme('a', "aa", Nil).append("abc") shouldBe ValuedScheme('a', "aa", List("abc"))
       }
