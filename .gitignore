@@ -1,0 +1,24 @@
+# Add any directories, files, or patterns you don't want to be tracked by version control
+/target
+/.idea
+/project/project
+/project/target
+logs/
+logs
+sbt.*
+sbt-dist/
+sbt
+.vscode/
+
+firebase-config
+
+*.local
+
+test\.png
+
+*.log
+
+# OS Generated file
+.DS_Store
+
+firebase-config/serviceAccountKey.json
