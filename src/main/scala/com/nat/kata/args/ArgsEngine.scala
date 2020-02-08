@@ -39,6 +39,7 @@ object ArgsEngine {
       def accept(c: Char): EscapedStringEngine = c match {
         case '\"' => ConsumeEscapedString("")
         case ' ' => WaitingForInput
+        case '-' => ErrorConsuming("Missing input value")
         case a => ConsumeNonEscapedString(s"$a")
       }
     }
@@ -55,6 +56,8 @@ object ArgsEngine {
       }
     }
     case class DoneConsuming(str: String) extends EscapedStringEngine
+
+    case class ErrorConsuming(str: String) extends EscapedStringEngine
 
     case class StringParsedResult(parsed: String, remaining: String)
   }

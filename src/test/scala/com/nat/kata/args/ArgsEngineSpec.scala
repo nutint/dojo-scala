@@ -60,6 +60,10 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
         WaitingForInput.accept(' ') shouldBe WaitingForInput
       }
 
+      "should fail when accept other scheme prefix (-)" in {
+        WaitingForInput.accept('-') shouldBe ErrorConsuming("Missing input value")
+      }
+
       "should accept value during consume string" in {
         val example =
           Table(
@@ -211,7 +215,7 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
     }
 
     "ValuedScheme" - {
-      
+
       "should append value when call append" in {
         ValuedScheme('a', "aa", Nil).append("abc") shouldBe ValuedScheme('a', "aa", List("abc"))
       }
