@@ -175,18 +175,26 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
 
       import StringEngine._
 
-      val valuedScheme = ValuedScheme('a', "aa", Nil)
-      val schemes = List(valuedScheme)
+
+      def assertArgsEngineToArgsEngine(srcStringEngine: EscapedStringEngine, event: Char, targetStringEngine: EscapedStringEngine): Any = {
+        val valuedScheme = ValuedScheme('a', "aa", Nil)
+        val schemes = List(valuedScheme)
+        ArgsEngineParseValue(schemes, valuedScheme, srcStringEngine).accept(event) shouldBe
+          ArgsEngineParseValue(schemes, valuedScheme, targetStringEngine)
+      }
 
       "should be the same if accept empty string and the string engine is not finished yet" in {
-        ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput).accept(' ') shouldBe
-          ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput)
+        assertArgsEngineToArgsEngine(WaitingForInput, ' ', WaitingForInput)
       }
 
       "should be the same if accept any char and the string engine is not finished yet" in {
-        ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput).accept('a') shouldBe
-          ArgsEngineParseValue(schemes, valuedScheme, ConsumeNonEscapedString("a"))
+        assertArgsEngineToArgsEngine(WaitingForInput, 'a', ConsumeNonEscapedString("a"))
       }
+
+      "should be the same if accept double quote and the string engine is not finished yet" in {
+        assertArgsEngineToArgsEngine(WaitingForInput, '\"', ConsumeEscapedString(""))
+      }
+
     }
   }
 
