@@ -8,46 +8,6 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
   import ArgsEngine._
 
   "StringEngine" - {
-    import StringEngine._
-
-    "should parse all string in the following case" in {
-      StringEngine.parse("abc") shouldBe Right(StringParsedResult("abc", ""))
-    }
-
-    "should left remaining when there is no double quote" in {
-      val example =
-        Table(
-          ("wantedString", "remainingString", "expectedRemainingString"),
-          ("abc", "d", "d"),
-          ("abc", "d e", "d e"),
-          ("abc", "d e  f g", "d e  f g")
-        )
-
-      forAll(example) { (wantedString, remainingString, expectedRemainingString) =>
-        StringEngine.parse(s"$wantedString $remainingString") shouldBe Right(StringParsedResult(wantedString, expectedRemainingString))
-      }
-    }
-
-    "should fail when start with quote but not have matched quote" in {
-      StringEngine.parse("\"abc") shouldBe Left("string annotation does not match")
-    }
-
-    "should success when double quote is matched" in {
-      StringEngine.parse("\"abc\"") shouldBe Right(StringParsedResult("abc", ""))
-    }
-
-    "should success and remaining left over when the quote is matched, and still have some to parse" in {
-      val example =
-        Table(
-          ("exampleInput", "parsed", "leftOver"),
-          ("\"abc\" def", "abc", " def"),
-          ("\"abc\" \"def", "abc", " \"def" )
-        )
-      forAll(example) { (exampleInput, parsed, leftOver) =>
-        StringEngine.parse(exampleInput) shouldBe Right(StringParsedResult(parsed, leftOver))
-      }
-    }
-
 
     "EscapedStringEngine" - {
       import StringEngine._

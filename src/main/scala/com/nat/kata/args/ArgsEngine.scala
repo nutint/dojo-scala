@@ -19,29 +19,6 @@ object ArgsEngine {
     }
 
   object StringEngine {
-    def parse(input: String): Either[String, StringParsedResult] =
-      parseEscapedString(input)
-
-    private def parseEscapedString(input: String): Either[String, StringParsedResult] = {
-      val (escapedStringEngine: EscapedStringEngine, leftOver: String) =
-      input.toCharArray.foldLeft[(EscapedStringEngine, String)]((WaitingForInput, ""))
-        { (engineAndLeftOver: (EscapedStringEngine, String), c: Char) =>
-          val (engine, leftOver) = engineAndLeftOver
-          engine match {
-            case WaitingForInput => (WaitingForInput.accept(c), "")
-            case consumed: ConsumeEscapedString => (consumed.accept(c), "")
-            case consumed: ConsumeNonEscapedString => (consumed.accept(c), "")
-            case d: DoneConsuming => (d, leftOver + c)
-          }
-        }
-      escapedStringEngine match {
-        case WaitingForInput => Left("string annotation does not match")
-        case ConsumeEscapedString(_) => Left("string annotation does not match")
-        case ConsumeNonEscapedString(consumed) => Right(StringParsedResult(consumed, ""))
-        case DoneConsuming(consumed) => Right(StringParsedResult(consumed, leftOver))
-      }
-    }
-
 
     sealed trait EscapedStringEngine
     sealed trait WorkingStringEngine extends EscapedStringEngine {
@@ -70,8 +47,6 @@ object ArgsEngine {
     case class DoneConsuming(str: String) extends EscapedStringEngine
 
     case class ErrorConsuming(str: String) extends EscapedStringEngine
-
-    case class StringParsedResult(parsed: String, remaining: String)
   }
 
 
