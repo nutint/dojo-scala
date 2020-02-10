@@ -9,7 +9,7 @@ object ArgsEngine {
   def parseArguments(argumentString: String, schemes: List[ArgsScheme]): Either[String, List[ArgsScheme]] =
     argumentString.foldLeft[ArgsEngine](ArgsEngineIdle(schemes)) { (engine, c) =>
       engine match {
-        case workingArgsEngine: WorkingArgsEngine => workingArgsEngine.accept(c)
+        case workingArgsEngine: WorkingArgsEngine => workingArgsEngine.accepts(c)
         case a => a
       }
     } match {
@@ -22,10 +22,10 @@ object ArgsEngine {
 
     sealed trait EscapedStringEngine
     sealed trait WorkingStringEngine extends EscapedStringEngine {
-      def accept(c: Char): EscapedStringEngine
+      def accepts(c: Char): EscapedStringEngine
     }
     case object WaitingForInput extends WorkingStringEngine {
-      def accept(c: Char): EscapedStringEngine = c match {
+      def accepts(c: Char): EscapedStringEngine = c match {
         case '\"' => ConsumeEscapedString("")
         case ' ' => WaitingForInput
         case '-' => ErrorConsuming("Missing input value")
@@ -33,13 +33,13 @@ object ArgsEngine {
       }
     }
     case class ConsumeEscapedString(parsedString: String) extends WorkingStringEngine {
-      def accept(c: Char): EscapedStringEngine = c match {
+      def accepts(c: Char): EscapedStringEngine = c match {
         case '\"' => DoneConsuming(parsedString)
         case _ => ConsumeEscapedString(parsedString + c)
       }
     }
     case class ConsumeNonEscapedString(parsedString: String) extends WorkingStringEngine {
-      def accept(c: Char): EscapedStringEngine = c match {
+      def accepts(c: Char): EscapedStringEngine = c match {
         case ' ' => DoneConsuming(parsedString)
         case a => ConsumeNonEscapedString(parsedString + a)
       }
@@ -51,10 +51,10 @@ object ArgsEngine {
 
 
   sealed trait WorkingArgsEngine extends ArgsEngine {
-    def accept(c: Char): ArgsEngine
+    def accepts(c: Char): ArgsEngine
   }
   case class ArgsEngineIdle(schemes: List[ArgsScheme]) extends WorkingArgsEngine {
-    def accept(c: Char): ArgsEngine = c match {
+    def accepts(c: Char): ArgsEngine = c match {
       case ' ' => this
       case '-' => ArgsEngineShortScheme(schemes)
       case x => ArgsEngineTerminated(s"Unexpected char: $x")
@@ -62,7 +62,7 @@ object ArgsEngine {
   }
 
   case class ArgsEngineShortScheme(schemes: List[ArgsScheme]) extends WorkingArgsEngine {
-    def accept(c: Char): ArgsEngine = c match {
+    def accepts(c: Char): ArgsEngine = c match {
       case '-' => ArgsEngineLongScheme(schemes, "")
       case a if schemes.exists(as => isShortAndNonValuedScheme(a, as)) =>
         ArgsEngineIdle(
@@ -84,7 +84,7 @@ object ArgsEngine {
     }
   }
   case class ArgsEngineLongScheme(schemes: List[ArgsScheme], parsedScheme: String) extends WorkingArgsEngine {
-    def accept(c: Char): ArgsEngine = c match {
+    def accepts(c: Char): ArgsEngine = c match {
       case ' ' if schemes.exists(isMatchedValueScheme) => toParseValue
       case ' ' => ArgsEngineIdle(
         schemes.map {
@@ -109,8 +109,8 @@ object ArgsEngine {
 
     import StringEngine._
 
-    def accept(c: Char): ArgsEngine = stringEngine match {
-      case w: WorkingStringEngine => w.accept(c) match {
+    def accepts(c: Char): ArgsEngine = stringEngine match {
+      case w: WorkingStringEngine => w.accepts(c) match {
         case DoneConsuming(str) => markDone(str)
         case StringEngine.ErrorConsuming(str) => ArgsEngineTerminated(s"Unable to parse value: $str")
         case aw: WorkingStringEngine => copy(stringEngine = aw)

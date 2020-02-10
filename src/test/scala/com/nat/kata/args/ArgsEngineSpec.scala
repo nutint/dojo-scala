@@ -13,15 +13,15 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
       import StringEngine._
 
       "should change state after accept double quote" in {
-        WaitingForInput.accept('\"') shouldBe ConsumeEscapedString("")
+        WaitingForInput accepts '\"' shouldBe ConsumeEscapedString("")
       }
 
       "should not change state after accept empty string" in {
-        WaitingForInput.accept(' ') shouldBe WaitingForInput
+        WaitingForInput accepts ' ' shouldBe WaitingForInput
       }
 
       "should fail when accept other scheme prefix (-)" in {
-        WaitingForInput.accept('-') shouldBe ErrorConsuming("Missing input value")
+        WaitingForInput accepts '-' shouldBe ErrorConsuming("Missing input value")
       }
 
       "should accept value during consume string" in {
@@ -33,34 +33,29 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
           )
 
         forAll(example) { (acceptingValue, consumedValue, expectedValue) =>
-          ConsumeEscapedString(consumedValue).accept(acceptingValue) shouldBe ConsumeEscapedString(expectedValue)
+          ConsumeEscapedString(consumedValue) accepts acceptingValue shouldBe ConsumeEscapedString(expectedValue)
         }
       }
 
       "should done accepting value when accept another double quote" in {
-        ConsumeEscapedString("abc").accept('\"') shouldBe DoneConsuming("abc")
+        ConsumeEscapedString("abc") accepts '\"' shouldBe DoneConsuming("abc")
       }
 
       "NonEscapedString" - {
 
         "should change state to ConsumeNonEscapedString after accept any char" in {
-          WaitingForInput.accept('a') shouldBe ConsumeNonEscapedString("a")
+          WaitingForInput accepts 'a' shouldBe ConsumeNonEscapedString("a")
         }
 
         "should append value after consume any char" in {
-          ConsumeNonEscapedString("a").accept('b') shouldBe ConsumeNonEscapedString("ab")
+          ConsumeNonEscapedString("a") accepts 'b' shouldBe ConsumeNonEscapedString("ab")
         }
 
         "should change to done after consume space" in {
-          ConsumeNonEscapedString("a").accept(' ') shouldBe DoneConsuming("a")
+          ConsumeNonEscapedString("a") accepts ' ' shouldBe DoneConsuming("a")
         }
       }
     }
-  }
-
-  "SchemeEngine" - {
-
-
   }
 
   "ArgsEngine" - {
@@ -70,15 +65,15 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
       val schemes = List[ArgsScheme]()
 
       "should idle when accept space" in {
-        ArgsEngineIdle(schemes).accept(' ') shouldBe ArgsEngineIdle(schemes)
+        ArgsEngineIdle(schemes) accepts ' ' shouldBe ArgsEngineIdle(schemes)
       }
 
       "should be ArgsEngineShortScheme when accepts -" in {
-        ArgsEngineIdle(schemes).accept('-') shouldBe ArgsEngineShortScheme(schemes)
+        ArgsEngineIdle(schemes) accepts '-' shouldBe ArgsEngineShortScheme(schemes)
       }
 
       "should be ArgsEngineTerminated when accepts others" in {
-        ArgsEngineIdle(schemes).accept('a') shouldBe ArgsEngineTerminated(s"Unexpected char: a")
+        ArgsEngineIdle(schemes) accepts 'a' shouldBe ArgsEngineTerminated(s"Unexpected char: a")
       }
     }
 
@@ -88,7 +83,7 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
 
       "should become ArgsEngineLongScheme when accepts another -" in {
         val schemes = List[ArgsScheme]()
-        ArgsEngineShortScheme(schemes).accept('-') shouldBe ArgsEngineLongScheme(schemes, "")
+        ArgsEngineShortScheme(schemes) accepts '-' shouldBe ArgsEngineLongScheme(schemes, "")
       }
 
       "should detect non value scheme when the input scheme is matched with one of non valued scheme" in {
@@ -97,14 +92,14 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
         val schemes = List[ArgsScheme](nonValuedScheme)
         val modifiedScheme = List[ArgsScheme](foundNonValuedScheme)
 
-        ArgsEngineShortScheme(schemes).accept('a') shouldBe ArgsEngineIdle(modifiedScheme)
+        ArgsEngineShortScheme(schemes) accepts 'a' shouldBe ArgsEngineIdle(modifiedScheme)
       }
 
       "should detect value scheme when input scheme is matched with one of valued scheme" in {
         val valuedScheme = ValuedScheme('a', "aa", Nil)
         val schemes = List[ArgsScheme](valuedScheme)
 
-        ArgsEngineShortScheme(schemes).accept('a') shouldBe ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput)
+        ArgsEngineShortScheme(schemes) accepts 'a' shouldBe ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput)
       }
     }
 
@@ -113,7 +108,7 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
       import StringEngine._
 
       "should parsed scheme when found a char" in {
-        ArgsEngineLongScheme(Nil, "").accept('a') shouldBe ArgsEngineLongScheme(Nil, "a")
+        ArgsEngineLongScheme(Nil, "") accepts 'a' shouldBe ArgsEngineLongScheme(Nil, "a")
       }
 
       "should find matched scheme and found when find space, and there is a match scheme" in {
@@ -121,13 +116,13 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
         val foundNonValuedScheme = nonValuedScheme.markFound
         val schemes = List(nonValuedScheme)
         val modifiedScheme = List(foundNonValuedScheme)
-        ArgsEngineLongScheme(schemes, "aa").accept(' ') shouldBe ArgsEngineIdle(modifiedScheme)
+        ArgsEngineLongScheme(schemes, "aa") accepts ' ' shouldBe ArgsEngineIdle(modifiedScheme)
       }
 
       "should look for value when matched a ValuedScheme" in {
         val valuedScheme = ValuedScheme('a', "aa", Nil)
         val schemes = List(valuedScheme)
-        ArgsEngineLongScheme(schemes, "aa").accept(' ') shouldBe ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput)
+        ArgsEngineLongScheme(schemes, "aa") accepts ' ' shouldBe ArgsEngineParseValue(schemes, valuedScheme, WaitingForInput)
       }
     }
 
@@ -139,7 +134,7 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
       def assertArgsEngineToArgsEngine(srcStringEngine: EscapedStringEngine, event: Char, targetStringEngine: EscapedStringEngine): Any = {
         val valuedScheme = ValuedScheme('a', "aa", Nil)
         val schemes = List(valuedScheme)
-        ArgsEngineParseValue(schemes, valuedScheme, srcStringEngine).accept(event) shouldBe
+        ArgsEngineParseValue(schemes, valuedScheme, srcStringEngine) accepts event shouldBe
           ArgsEngineParseValue(schemes, valuedScheme, targetStringEngine)
       }
 
@@ -149,7 +144,7 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
 
       "should error when accept `-` during waiting for input" in {
         val valuedScheme = ValuedScheme('a', "aa", Nil)
-        ArgsEngineParseValue(List(valuedScheme), valuedScheme, WaitingForInput).accept('-') shouldBe
+        ArgsEngineParseValue(List(valuedScheme), valuedScheme, WaitingForInput) accepts '-' shouldBe
           ArgsEngineTerminated("Unable to parse value: Missing input value")
       }
 
@@ -166,7 +161,7 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
         "should done consuming when accept space" in {
           val valuedScheme = ValuedScheme('a', "aa", Nil)
           val schemes = List(valuedScheme)
-          ArgsEngineParseValue(schemes, valuedScheme, ConsumeNonEscapedString("ab")).accept(' ') shouldBe
+          ArgsEngineParseValue(schemes, valuedScheme, ConsumeNonEscapedString("ab")) accepts ' ' shouldBe
             ArgsEngineIdle(List(valuedScheme.append("ab")))
         }
 
@@ -194,7 +189,7 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
 
         "should done consuming when accept double quote" in {
           val valuedScheme = ValuedScheme('a', "aa", Nil)
-          ArgsEngineParseValue(List(valuedScheme), valuedScheme, ConsumeEscapedString(" a")).accept('\"') shouldBe
+          ArgsEngineParseValue(List(valuedScheme), valuedScheme, ConsumeEscapedString(" a")) accepts '\"' shouldBe
             ArgsEngineIdle(List(valuedScheme.append(" a")))
         }
 
