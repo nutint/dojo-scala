@@ -209,6 +209,13 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
           ArgsEngineParseValue(schemes, valuedScheme, ConsumeNonEscapedString("ab")).accept(' ') shouldBe
             ArgsEngineIdle(List(valuedScheme.append("ab")))
         }
+
+        "should become idle when mark as done" in {
+          val valuedScheme = ValuedScheme('a', "aa", Nil)
+          val schemes = List(valuedScheme)
+          ArgsEngineParseValue(schemes, valuedScheme, ConsumeNonEscapedString("ab")).markDone shouldBe
+            ArgsEngineIdle(List(valuedScheme.append("ab")))
+        }
       }
 
       "ConsumeEscapedString" - {
@@ -280,6 +287,57 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
 
       "should return false when short scheme not matched" in {
         ValuedScheme('a', "aab", Nil).isShortSchemeMatched('b') shouldBe false
+      }
+    }
+  }
+
+  "parseArguments" - {
+
+    "Logging Port Output Scenario" - {
+
+      val schemes = List(
+        NonValuedScheme('l', "logging", false),
+        ValuedScheme('p', "port", Nil),
+        ValuedScheme('o', "output", Nil)
+      )
+
+      "should parse correct with the following input `-l -p 3000 -o abc`" in {
+        parseArguments("-l -p 3000 -o abc", schemes) shouldBe Right(List(
+          NonValuedScheme('l', "logging", false).markFound,
+          ValuedScheme('p', "port", Nil).append("3000"),
+          ValuedScheme('o', "output", Nil).append("abc")))
+      }
+
+      "should parse correct with the following input `--logging --port 3000 --output abc`" in {
+        parseArguments("--logging --port 3000 --output abc", schemes) shouldBe Right(List(
+          NonValuedScheme('l', "logging", false).markFound,
+          ValuedScheme('p', "port", Nil).append("3000"),
+          ValuedScheme('o', "output", Nil).append("abc")))
+      }
+
+      "should work well when passing escaped string as an input" in {
+        parseArguments("--logging --port \"a 3000\" --output \"abc    \"", schemes) shouldBe Right(List(
+          NonValuedScheme('l', "logging", false).markFound,
+          ValuedScheme('p', "port", Nil).append("a 3000"),
+          ValuedScheme('o', "output", Nil).append("abc    ")))
+      }
+
+      "should work in any order" in {
+        parseArguments("-p 3000 -o abc -l", schemes) shouldBe Right(List(
+          NonValuedScheme('l', "logging", false).markFound,
+          ValuedScheme('p', "port", Nil).append("3000"),
+          ValuedScheme('o', "output", Nil).append("abc")))
+      }
+
+      "should work when there is spaces after the arguments" in {
+        parseArguments("-p 3000 -o abc -l   ", schemes) shouldBe Right(List(
+          NonValuedScheme('l', "logging", false).markFound,
+          ValuedScheme('p', "port", Nil).append("3000"),
+          ValuedScheme('o', "output", Nil).append("abc")))
+      }
+
+      "when there is no arguments, the expected scheme should be default" in {
+        parseArguments("", schemes) shouldBe Right(schemes)
       }
     }
   }
