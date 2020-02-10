@@ -339,6 +339,13 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
       "when there is no arguments, the expected scheme should be default" in {
         parseArguments("", schemes) shouldBe Right(schemes)
       }
+
+      "when there is more than 1 ports value" in {
+        parseArguments("-p 3000 -p 7000 -p 9000 -o abc -l", schemes) shouldBe Right(List(
+          NonValuedScheme('l', "logging", false).markFound,
+          ValuedScheme('p', "port", Nil).append("3000").append("7000").append("9000"),
+          ValuedScheme('o', "output", Nil).append("abc")))
+      }
     }
   }
 }

@@ -166,9 +166,9 @@ object ArgsEngine {
     def isShortSchemeMatched(c: Char): Boolean = shortScheme == c
   }
   case class NonValuedScheme(shortScheme: Char, longScheme: String, found: Boolean) extends ArgsScheme {
-    def markFound: ArgsScheme = copy(found = true)
+    def markFound: NonValuedScheme = copy(found = true)
   }
   case class ValuedScheme(shortScheme: Char, longScheme: String, values: List[String]) extends ArgsScheme {
-    def append(value: String): ArgsScheme = copy(values = value :: values)
+    def append(value: String): ValuedScheme = copy(values = value :: values)
   }
 }
