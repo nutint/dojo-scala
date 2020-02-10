@@ -187,12 +187,50 @@ class ArgsEngineSpec extends FreeSpec with Matchers {
         assertArgsEngineToArgsEngine(WaitingForInput, ' ', WaitingForInput)
       }
 
-      "should be the same if accept any char and the string engine is not finished yet" in {
-        assertArgsEngineToArgsEngine(WaitingForInput, 'a', ConsumeNonEscapedString("a"))
+      "should error when accept `-` during waiting for input" in {
+        val valuedScheme = ValuedScheme('a', "aa", Nil)
+        ArgsEngineParseValue(List(valuedScheme), valuedScheme, WaitingForInput).accept('-') shouldBe
+          ArgsEngineTerminated("Unable to parse value: Missing input value")
       }
 
-      "should be the same if accept double quote and the string engine is not finished yet" in {
-        assertArgsEngineToArgsEngine(WaitingForInput, '\"', ConsumeEscapedString(""))
+      "ConsumeNonEscapedString" - {
+
+        "should be the same if accept any char and the string engine is not finished yet" in {
+          assertArgsEngineToArgsEngine(WaitingForInput, 'a', ConsumeNonEscapedString("a"))
+        }
+
+        "should add new value to current when accept another value" in {
+          assertArgsEngineToArgsEngine(ConsumeNonEscapedString("a"), 'b', ConsumeNonEscapedString("ab"))
+        }
+
+        "should done consuming when accept space" in {
+          val valuedScheme = ValuedScheme('a', "aa", Nil)
+          val schemes = List(valuedScheme)
+          ArgsEngineParseValue(schemes, valuedScheme, ConsumeNonEscapedString("ab")).accept(' ') shouldBe
+            ArgsEngineIdle(List(valuedScheme.append("ab")))
+        }
+      }
+
+      "ConsumeEscapedString" - {
+
+        "should be the same if accept double quote and the string engine is not finished yet" in {
+          assertArgsEngineToArgsEngine(WaitingForInput, '\"', ConsumeEscapedString(""))
+        }
+
+        "should add new value when accept space" in {
+          assertArgsEngineToArgsEngine(ConsumeEscapedString(""), ' ', ConsumeEscapedString(" "))
+        }
+
+        "should add new value even if already have value" in {
+          assertArgsEngineToArgsEngine(ConsumeEscapedString(" "), 'a', ConsumeEscapedString(" a"))
+        }
+
+        "should done consuming when accept double quote" in {
+          val valuedScheme = ValuedScheme('a', "aa", Nil)
+          ArgsEngineParseValue(List(valuedScheme), valuedScheme, ConsumeEscapedString(" a")).accept('\"') shouldBe
+            ArgsEngineIdle(List(valuedScheme.append(" a")))
+        }
+
       }
 
     }

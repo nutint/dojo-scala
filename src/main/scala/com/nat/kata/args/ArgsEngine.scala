@@ -120,7 +120,11 @@ object ArgsEngine {
 
     def accept(c: Char): ArgsEngine = stringEngine match {
       case w: WorkingStringEngine => w.accept(c) match {
-        case DoneConsuming(str) => ???
+        case DoneConsuming(str) => ArgsEngineIdle(schemes.map{
+          case `activeScheme` => activeScheme.append(str)
+          case a => a
+        })
+        case StringEngine.ErrorConsuming(str) => ArgsEngineTerminated(s"Unable to parse value: $str")
         case aw: WorkingStringEngine => copy(stringEngine = aw)
       }
       case DoneConsuming(str) => ???
