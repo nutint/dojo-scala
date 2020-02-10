@@ -2,6 +2,9 @@ package com.nat.kata.diamond
 
 import org.scalatest.{FreeSpec, Matchers}
 
+/**
+ * Instruction http://codingdojo.org/kata/Diamond/
+ */
 class DiamondEngineSpec extends FreeSpec with Matchers {
 
   import DiamondEngine._
